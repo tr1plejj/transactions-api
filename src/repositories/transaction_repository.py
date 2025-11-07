@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -8,7 +10,7 @@ class TransactionRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def check_if_exists(self, transaction_id: str) -> bool:
+    async def check_if_exists(self, transaction_id: UUID) -> bool:
         query = select(Transaction.transaction_id).filter_by(
             transaction_id=transaction_id
         )

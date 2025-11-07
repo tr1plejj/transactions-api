@@ -3,19 +3,25 @@ import time
 from contextlib import asynccontextmanager
 
 import psutil
+from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI, Request, Response
 from prometheus_client import generate_latest, Counter, Gauge, Histogram
 
+from src.broker.consumer import broker
+from src.di.container import container_factory
 from src.routers import all_routers
 
 
 @asynccontextmanager
 async def lifecycle(a: FastAPI):
     asyncio.create_task(update_simple_metrics())
+    await broker.connect()
     yield
+    await broker.stop()
 
 
 app = FastAPI(lifespan=lifecycle)
+setup_dishka(container_factory(), app)
 app.include_router(all_routers)
 
 REQUEST_COUNT = Counter(

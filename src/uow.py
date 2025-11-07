@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Callable
 
-from src.infrastructure.database.core import sessionmaker
 from src.repositories.account_repository import AccountRepository
 from src.repositories.admin_repository import AdminRepository
 from src.repositories.transaction_repository import TransactionRepository
@@ -50,9 +49,3 @@ class UnitOfWork(AbstractUnitOfWork):
 
     async def rollback(self):
         await self.session.rollback()
-
-
-async def get_uow():
-    uow = UnitOfWork(sessionmaker)
-    async with uow:
-        yield uow

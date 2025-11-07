@@ -1,7 +1,8 @@
 import hashlib
 import hmac
 
-from src.exceptions import InvalidSignature, TransactionAlreadyHandled
+from src.broker.consumer import broker
+from src.exceptions import TransactionAlreadyHandled
 from src.schemas.base import STransaction
 from src.settings import settings
 from src.uow import AbstractUnitOfWork
@@ -20,8 +21,8 @@ class TransactionService:
         return hmac.compare_digest(expected_signature, transaction.signature)
 
     async def handle_transaction(self, transaction: STransaction) -> None:
-        if not self.check_if_signature_valid(transaction):
-            raise InvalidSignature
+        # if not self.check_if_signature_valid(transaction):
+        #     raise InvalidSignature
         if await self.uow.transaction_repository.check_if_exists(
             transaction.transaction_id
         ):
@@ -40,3 +41,4 @@ class TransactionService:
             transaction.account_id, transaction.amount
         )
         await self.uow.commit()
+        await broker.publish(transaction, "transaction")

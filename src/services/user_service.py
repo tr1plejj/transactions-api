@@ -1,3 +1,4 @@
+from src.broker.consumer import broker
 from src.exceptions import EmailHasAlreadyTaken, WrongCredentials
 from src.schemas.base import SAccount, STransaction
 from src.schemas.user_schemas import SUserRegister, SUserAuth, SUserUpdate, SUser
@@ -30,6 +31,7 @@ class UserService:
         token = self.auth_service.encode_access_token(
             user.id, user.email, user.full_name, "user"
         )
+        await broker.publish(user.id, "users")
         return token
 
     async def get_all_accounts(self, user_id: int) -> list[SAccount]:

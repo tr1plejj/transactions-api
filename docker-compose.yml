@@ -23,6 +23,33 @@ services:
       - "8000:8000"
     command: ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
+  rabbitmq:
+    image: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq/mnesia
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    build: .
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    command: ["faststream", "run", "src.broker.consumer:app"]
+
   prometheus:
     image: prom/prometheus
     container_name: prometheus
@@ -64,14 +91,7 @@ services:
 volumes:
   prometheus_data:
     driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: ./prometheus_data
   grafana_data:
     driver: local
-    driver_opts:
-      o: bind
-      type: none
-      device: ./grafana_data
   pgdata:
+  rabbitmq_data:

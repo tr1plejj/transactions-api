@@ -4,7 +4,6 @@ import asyncio
 from passlib.context import CryptContext
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy import select
-from passlib.hash import bcrypt
 
 from src.infrastructure.database.models import Base, User, Account, Admin
 from src.settings import settings
@@ -20,12 +19,16 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def hash_password(plain: str) -> str:
     return pwd_context.hash(plain)
 
+
 async def create_tables(engine):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
+
 async def seed_data(engine):
-    async_session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    async_session = async_sessionmaker(
+        engine, expire_on_commit=False, class_=AsyncSession
+    )
     async with async_session() as session:
         q = await session.execute(select(User).where(User.email == TEST_USER_EMAIL))
         user = q.scalars().first()
@@ -51,7 +54,9 @@ async def seed_data(engine):
             await session.refresh(account)
             print(f"Created account id={account.id} for user id={user.id}")
         else:
-            print(f"Account exists id={account.id} for user id={user.id} (balance={account.balance})")
+            print(
+                f"Account exists id={account.id} for user id={user.id} (balance={account.balance})"
+            )
 
         q = await session.execute(select(Admin).where(Admin.email == TEST_ADMIN_EMAIL))
         admin = q.scalars().first()
@@ -68,11 +73,13 @@ async def seed_data(engine):
         else:
             print(f"Admin exists {admin.email} id={admin.id}")
 
+
 async def main():
     engine = create_async_engine(DATABASE_URL, echo=False)
     await create_tables(engine)
     await seed_data(engine)
     await engine.dispose()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
